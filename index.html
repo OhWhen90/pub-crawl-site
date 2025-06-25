@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
+  <title>Pub Crawl Challenge List</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      font-size: 18px;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 1rem;
+      background: #f9f9f9;
+      color: #222;
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    label {
+      display: flex;
+      align-items: flex-start;
+      padding: 0.6rem 0;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+    input[type="checkbox"] {
+      margin-right: 1rem;
+      transform: scale(1.3);
+    }
+    .emoji {
+      margin-right: 0.3rem;
+      font-size: 1.4rem;
+    }
+    .challenge-title {
+      font-weight: bold;
+    }
+    .challenge-desc {
+      margin-left: 2.7rem;
+      font-size: 1rem;
+      color: #555;
+      margin-top: -0.3rem;
+    }
+    .bonus, .rainbow {
+      margin-left: 2.7rem;
+      font-size: 0.95rem;
+      color: #444;
+    }
+    .rainbow input[type="checkbox"],
+    .bonus input[type="checkbox"] {
+      transform: scale(1.1);
+      margin-right: 0.4rem;
+    }
+    .rainbow label {
+      display: inline-block;
+      width: 48%;
+      margin-top: 0.3rem;
+    }
+    #secret-challenges {
+      display: none;
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+
+<h1 id="title">Pub Crawl Challenge List</h1>
+
+<div id="challenge-container"></div>
+<div id="secret-challenges">
+  <h2>Secret Challenges</h2>
+  <div id="secret-container"></div>
+</div>
+
+<div style="text-align: center; margin-top: 2rem; font-size: 1.2rem;">
+  <div id="main-count">✔️ Challenges Completed: 0 / 10</div>
+  <div id="bonus-count">⭐ Bonus Points Earned: 0 / 10</div>
+  <div id="total-score">🏆 Total Score: 0 / 20</div>
+</div>
+
+<script>
+  const challenges = [
+  {
+    id: 0,
+    emojis: ["🔁", "👕"],
+    title: "Closet Shuffle.",
+    desc: "Swap an item of clothing with someone for the entire time at one location."
+  },
+  {
+    id: 1,
+    emojis: ["🌈", "🥤"],
+    title: "Taste the Rainbow.",
+    desc: "Drink two different colours of the rainbow — use cocktails, shots, or mixers."
+  },
+  {
+    id: 1.1,
+    type: "rainbow",
+    colors: ["Red", "Orange", "Yellow", "Green", "Blue", "Indigo", "Violet"]
+  },
+  {
+    id: 2,
+    emojis: ["🥤", "3️⃣"],
+    title: "The Diana Special.",
+    desc: "Finish your entire drink using three (or more) straws at once."
+  },
+  {
+    id: 3,
+    emojis: ["🔙", "🚶"],
+    title: "Backwards Journey.",
+    desc: "Walk backwards between any two crawl stops. Safety first — have a guide!"
+  },
+  {
+    id: 4,
+    emojis: ["🧦", "🖐️"],
+    title: "Sock Puppet Hour.",
+    desc: "Wear a sock on your right hand for the entire time at one location. Introduce it as your new drinking buddy."
+  },
+  {
+    id: 5,
+    emojis: ["🕺", "🔥"],
+    title: "Dance-Off Destiny.",
+    desc: "Join or start a dance-off.",
+    bonus: {
+      id: "5b",
+      text: "Bonus: Win the dance-off or get strangers to cheer."
+    }
+  },
+  {
+    id: 6,
+    emojis: ["📎", "😏"],
+    title: "The Sneaky Peg.",
+    desc: "Clip your peg on someone without them noticing — it must stay there for 15 minutes.",
+    bonus: {
+      id: "6b",
+      text: "Bonus: Someone leaves one of the crawl stops wearing your peg."
+    }
+  },
+  {
+    id: 7,
+    emojis: ["🎭", "🍸"],
+    title: "Accent Order (Encore).",
+    desc: "Order your drink in a full accent (e.g. French, pirate, cowboy, Scottish).",
+    bonus: {
+      id: "7b",
+      text: "Bonus: Stay in character until you have finished your drink."
+    }
+  },
+  {
+    id: 8,
+    emojis: ["📸", "🍹"],
+    title: "The Hospitality Selfie.",
+    desc: "Take a selfie with either a bartender or a bouncer."
+  },
+  {
+    id: 9,
+    emojis: ["🍻", "🎤"],
+    title: "The Icebreaker Toast.",
+    desc: "Walk up to a complete stranger or another group and confidently give a short but passionate toast in their honour.",
+    bonus: {
+      id: "9b",
+      text: "Bonus: They toast back!"
+    }
+  }
+];
+
+  const secretChallenges = [
+    { id: "o0", emojis: ["🍺", "🧔"], title: "Buy Owen a Drink.", desc: "A toast to the man, the myth, the legend." },
+    { id: "o1", emojis: ["🍻", "🧔"], title: "Buy Owen Another Drink.", desc: "Because one drink just isn’t enough." },
+    { id: "o2", emojis: ["🥂", "🧔"], title: "Buy Owen a Third Drink.", desc: "Third time’s the charm — Owen salutes you!" },
+    { id: "s0", emojis: ["🍻", "🏨"], title: "Occidental Hotel Entrance.", desc: "Let the crawl begin! May our memories be blurry and our drinks be strong!" },
+    { id: "s1", emojis: ["🥷", "🥃"], title: "Uncle Ming’s Entrance.", desc: "We come seeking wisdom… and whiskey!" },
+    { id: "s2", emojis: ["🚋", "🎢"], title: "Light Rail Journey.", desc: "To the next round, we ride! Conduct us to chaos!" },
+    { id: "s3", emojis: ["⚓", "🍺"], title: "The Ship Inn Entrance.", desc: "Ahoy, Ship Inn! We’re here to sail the seas of spirits!" },
+    { id: "s4", emojis: ["🍽", "🍷"], title: "Jackson’s on George Arrival.", desc: "Refuel the adventurers! Ale in hand, fork at the ready!" },
+    { id: "s5", emojis: ["🏰", "⚔️"], title: "Fortune of War Entrance.", desc: "To battle! We drink in the name of victory!" },
+    { id: "s6", emojis: ["🍺", "🇩🇪"], title: "Munich Brauhaus Entrance.", desc: "Prost! Bring forth the beer and the bratwurst!" },
+    { id: "s7", emojis: ["💃", "🎶"], title: "Dancing Spot Arrival.", desc: "Our feet may fail, but our rhythm never will!" }
+  ];
+
+  let totalChallenges = 10;
+  let totalBonuses = 10;
+
+  function createChallenges(containerId, list, isSecret = false) {
+    const container = document.getElementById(containerId);
+    list.forEach(ch => {
+      const label = document.createElement("label");
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.id = `chk${ch.id}`;
+      label.appendChild(checkbox);
+
+      ch.emojis.forEach(e => {
+        const span = document.createElement("span");
+        span.className = "emoji";
+        span.textContent = e;
+        label.appendChild(span);
+      });
+
+      const div = document.createElement("div");
+      div.innerHTML = `<div class="challenge-title">${ch.title}</div><div class="challenge-desc">${ch.desc}</div>`;
+      label.appendChild(div);
+      container.appendChild(label);
+    });
+  }
+
+  function updateScore() {
+    // Save state
+    const allCheckboxes = document.querySelectorAll('input[type="checkbox"]');
+    const saved = {};
+    allCheckboxes.forEach(cb => {
+      saved[cb.id] = cb.checked;
+    });
+    localStorage.setItem('pubcrawl-progress', JSON.stringify(saved));
+    let main = 0;
+    let bonus = 0;
+
+    for (let i = 0; i < totalChallenges; i++) {
+      const cb = document.getElementById(`chk${i}`);
+      if (cb && cb.checked) main++;
+    }
+    for (let i = 0; i < totalBonuses; i++) {
+      const cb = document.getElementById(`chk${i}b`);
+      if (cb && cb.checked) bonus++;
+    }
+    // Include secret
+    secretChallenges.forEach(ch => {
+      const cb = document.getElementById(`chk${ch.id}`);
+      if (cb && cb.checked) main++;
+    });
+
+    document.getElementById("main-count").textContent = `✔️ Challenges Completed: ${main} / ${totalChallenges}`;
+    document.getElementById("bonus-count").textContent = `⭐ Bonus Points Earned: ${bonus} / ${totalBonuses}`;
+    document.getElementById("total-score").textContent = `🏆 Total Score: ${main + bonus} / ${totalChallenges + totalBonuses}`;
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    // Load saved checkbox state
+    const saved = JSON.parse(localStorage.getItem('pubcrawl-progress') || '{}');
+    Object.keys(saved).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.checked = saved[id];
+    });
+    createChallenges("challenge-container", challenges);
+    updateScore();
+
+    document.addEventListener("change", updateScore);
+
+    // Long press to reveal secrets
+    let pressTimer;
+    document.getElementById("title").addEventListener("mousedown", function () {
+      pressTimer = setTimeout(() => {
+        document.getElementById("secret-challenges").style.display = "block";
+        createChallenges("secret-container", secretChallenges, true);
+        totalChallenges += secretChallenges.length;
+        updateScore();
+      }, 5000);
+    });
+    document.getElementById("title").addEventListener("mouseup", function () {
+      clearTimeout(pressTimer);
+    });
+  });
+</script>
+
+<div style="text-align: center; margin-top: 2rem;">
+  <button onclick="resetAll()" style="padding: 0.6rem 1.2rem; font-size: 1.1rem; background: #cc0000; color: white; border: none; border-radius: 8px; cursor: pointer;">🔄 Reset Progress</button>
+</div>
+
+<script>
+  function resetAll() {
+    if (confirm("Are you sure you want to reset all progress? This will clear your challenges and hide secret challenges.")) {
+      localStorage.clear();
+      const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(cb => cb.checked = false);
+      document.getElementById("secret-challenges").style.display = "none";
+      document.getElementById("secret-container").innerHTML = "";
+      totalChallenges = 10;
+      updateScore();
+    }
+  }
+</script>
+
+</body>
+</html>
