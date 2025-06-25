@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
+  <title>Pub Crawl Challenge List</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      font-size: 18px;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 1rem;
+      background: #f9f9f9;
+      color: #222;
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    /* Style for the riddle container */
+    #riddle-container {
+      text-align: center;
+      margin: 1.5rem 0 2rem;
+      padding: 1rem;
+      background-color: #e8f5e9;
+      border: 1px solid #c8e6c9;
+      border-radius: 8px;
+      font-style: italic;
+      color: #388e3c;
+      font-size: 1.1em;
+      line-height: 1.5;
+      max-height: 1000px; /* Initial large height for transition */
+      transition: opacity 0.6s ease-out, max-height 0.6s ease-out, padding 0.6s ease-out, margin 0.6s ease-out, border 0.6s ease-out;
+    }
+    /* Style when riddle is hidden */
+    #riddle-container.riddle-hidden {
+      opacity: 0;
+      max-height: 0; /* Collapse to 0 */
+      padding-top: 0;
+      padding-bottom: 0;
+      margin-top: 0;
+      margin-bottom: 0;
+      border: none; /* Remove border */
+      overflow: hidden;
+      pointer-events: none; /* Make content non-interactive when hidden */
+    }
+    #riddle-answer {
+      font-weight: bold;
+      margin-top: 1em;
+      color: #1b5e20;
+    }
+
+    #hide-riddle-btn {
+        margin-top: 1.5rem;
+        padding: 0.6rem 1.2rem;
+        background-color: #388e3c; /* Darker green */
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background 0.3s ease;
+    }
+    #hide-riddle-btn:hover {
+        background-color: #2e7d32;
+    }
+
+    #show-riddle-btn {
+        display: block;
+        margin: 1rem auto;
+        padding: 0.5rem 1rem;
+        background-color: #66bb6a; /* Greenish */
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: opacity 0.6s ease-out, max-height 0.6s ease-out;
+        opacity: 0;
+        max-height: 0;
+        overflow: hidden; /* Important to hide it completely */
+        pointer-events: none; /* Make non-interactive when hidden */
+    }
+
+    #show-riddle-btn.visible {
+        opacity: 1;
+        max-height: 50px; /* Sufficient height for button */
+        pointer-events: auto;
+    }
+
+    .challenge-item { /* New class for the main challenge container */
+      display: flex; /* Use flexbox for alignment */
+      align-items: flex-start;
+      padding: 0.6rem 0;
+    }
+    .challenge-item .checkbox-container {
+        display: flex;
+        align-items: flex-start;
+        cursor: pointer; /* Make the checkbox area clickable */
+    }
+    .challenge-item .checkbox-container input[type="checkbox"] {
+        margin-right: 1rem;
+        transform: scale(1.3);
+        cursor: pointer;
+    }
+
+    .emojis-container { /* Container for emojis */
+      display: flex;
+      align-items: center;
+      /* Remove margin-left to prevent double spacing with individual emoji padding */
+      margin-right: 0.5rem;
+    }
+    .emoji {
+      font-size: 1.4rem;
+      line-height: 1; /* Ensure consistent vertical alignment */
+      /* Add some space between emojis if they are close, or if the secret emoji adds padding */
+      margin-right: 0.3rem; /* Small gap between emojis */
+    }
+    /* Make the clickable emoji hint at interaction */
+    .secret-trigger-emoji {
+      cursor: default !important; /* Forces the default cursor */
+      display: inline-block; /* Essential for padding to work correctly */
+      padding: 10px; /* Hitbox size */
+      margin: -10px; /* Compensating negative margin */
+      /* Optional: Add a subtle visual hint, e.g., a slight shadow or underline on hover */
+      /* text-shadow: 0 0 2px rgba(0,0,0,0.2); */
+      /* transition: text-shadow 0.2s ease; */
+    }
+    /* .secret-trigger-emoji:hover {
+        text-shadow: 0 0 5px rgba(0,0,0,0.4);
+    } */
+
+    .challenge-details { /* Container for title and description */
+        flex-grow: 1; /* Allows details to take up remaining space */
+    }
+    .challenge-title {
+      font-weight: bold;
+      cursor: pointer; /* Make the title clickable to toggle checkbox */
+    }
+    .challenge-desc {
+      font-size: 1rem;
+      color: #555;
+      margin-top: 0.2rem;
+    }
+    .bonus, .rainbow {
+      font-size: 0.95rem;
+      color: #444;
+      margin-top: 0.3rem; /* Add some space above bonuses */
+    }
+    .rainbow input[type="checkbox"],
+    .bonus input[type="checkbox"] {
+      transform: scale(1.1);
+      margin-right: 0.4rem;
+    }
+    .rainbow label,
+    .bonus label { /* Ensure labels within bonus/rainbow are display block or flex */
+      display: flex;
+      align-items: center;
+      width: 100%;
+      cursor: pointer;
+    }
+    #reset-btn {
+      margin: 2rem auto 1rem;
+      display: block;
+      font-size: 1.3rem;
+      background: #e74c3c;
+      color: white;
+      border: none;
+      padding: 0.7rem 1.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.3s ease;
+    }
+    #reset-btn:hover {
+      background: #c0392b;
+    }
+
+    /* Style for the secret challenges container */
+    #secret-challenge-section {
+      opacity: 0;
+      max-height: 0;
+      overflow: hidden;
+      transition: opacity 0.7s ease-in-out, max-height 0.7s ease-in-out;
+      pointer-events: none;
+      margin-top: 2rem;
+      border-top: 2px dashed #ccc;
+      padding-top: 1rem;
+    }
+    #secret-challenge-section.revealed {
+      opacity: 1;
+      max-height: 3000px; /* Keeping the generous height */
+      pointer-events: auto;
+    }
+    #secret-challenge-section h2 {
+        color: #5a2a8b;
+    }
+    /* Style for new subheadings within the secret section */
+    .secret-subheader {
+        text-align: center;
+        color: #4a1c7c;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+        font-size: 1.3rem;
+        font-weight: bold;
+    }
+
+    /* Style for the secret challenge tracker, now part of main score display */
+    #secret-challenges-count {
+      text-align: center;
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      color: #5a2a8b;
+      opacity: 0;
+      display: none;
+      transition: opacity 0.7s ease-in-out;
+    }
+    /* Make it visible when the secret section is revealed */
+    #secret-challenge-section.revealed ~ div #secret-challenges-count {
+        opacity: 1;
+        display: block;
+    }
+    /* Added style for the new line in secret challenge descriptions */
+    .secret-desc-new-line {
+        display: block;
+        margin-top: 0.3em;
+        font-style: italic;
+        color: #666;
+    }
+  </style>
+</head>
+<body>
+
+<h1 id="main-heading">Pub Crawl Challenge List</h1>
+
+<div id="riddle-container">
+  A grand adventure, now begins,<br>
+  Through taverns vast, where joy within.<br>
+  Ten trials await, for laughs and cheer,<br>
+  Your progress charted, banishing fear.<br><br>
+
+  But a subtle code, for the keenest mind,<br>
+  Unlocks wonders, you'll surely find...<br>
+  Find where the sipped is swiftly drained,<br>
+  Then a backward journey, boldly gained.<br>
+  Follow quickly with a hand adorned,<br>
+  Three in a row, a secret born!<br><br>
+
+  What am I, on this journey grand,<br>
+  That guides your steps, with secrets at hand?
+  <div id="riddle-answer">... Your Challenge List!</div>
+  <button id="hide-riddle-btn">Got it!</button>
+</div>
+
+<button id="show-riddle-btn">Show Riddle</button>
+
+<div id="challenge-container"></div>
+
+<div id="secret-challenge-section">
+    <h2 style="text-align: center;">🤫 Secret Challenges! 🤫</h2>
+    <div id="secret-challenge-container"></div>
+</div>
+
+<div style="text-align: center; margin-top: 2rem; font-size: 1.2rem;">
+  <div id="main-count">✔️ Challenges Completed: 0 / 10</div>
+  <div id="bonus-count">⭐ Bonus Points Earned: 0 / 0</div>
+  <div id="secret-challenges-count">🎁 Secret Challenges Completed: 0 / 3</div>
+  <div id="total-score">🏆 Total Score: 0 / 10</div>
+</div>
+
+<button id="reset-btn">Reset Progress</button>
+
+<script>
+  const STORAGE_KEY = "pubCrawlChallengeProgress";
+  const RIDDLE_HIDDEN_KEY = "isRiddleHidden"; // New key for riddle state
+
+  const challenges = [
+    { id: 0, emojis: ["🔄", "👕"], title: "Closet Shuffle.", desc: "Swap an item of clothing with someone for the entire time at one location." },
+    { id: 1, emojis: ["🌈", "🍹"], title: "Taste the Rainbow.", desc: "Drink two different colours of the rainbow — use cocktails, shots, or even mixers.", rainbow: true },
+    // Challenges 2, 3, 4 (new secret triggers)
+    { id: 2, emojis: ["🥤", "🍸"], title: "The Diana Special.", desc: "Finish your entire drink using three (or more) straws at once." },
+    { id: 3, emojis: ["🔙", "🚶‍♂️"], title: "Backwards Journey.", desc: "Walk backwards between any two crawl stops. Safety first, though — have a guide!" },
+    { id: 4, emojis: ["🧦", "✋"], title: "Sock Puppet Hour.", desc: "Wear a sock on your right hand for the entire time at one location. Introduce it as your new drinking buddy." },
+    { id: 5, emojis: ["🕺", "💃"], title: "Dance-Off Destiny.", desc: "Join or start a dance-off.", bonus: "If you win or get strangers to cheer." },
+    { id: 6, emojis: ["🤫", "📎"], title: "The Sneaky Peg.", desc: "Clip your peg on someone without them noticing — it must stay there for 15 minutes. Proof required!", bonus: "Someone leaves a crawl stop wearing your peg.", bonusAlwaysEnabled: true },
+    { id: 7, emojis: ["🎭", "🗣️"], title: "Accent Order (Encore).", desc: "Order your drink in a full accent (e.g. French, pirate, cowboy, Scottish).", bonus: "Stay in character until you have finished your drink." },
+    { id: 8, emojis: ["📸", "🤳"], title: "The Hospitality Selfie.", desc: "Take a selfie with either a bartender or a bouncer.", bonus: "If they smile." },
+    { id: 9, emojis: ["🍻", "🥂"], title: "The Icebreaker Toast.", desc: "Walk up to a complete stranger (or another group) and confidently give a short but passionate toast in their honour.", bonus: "They toast back." }
+  ];
+
+  const secretChallenges = [
+    { type: "subheader", text: "💧 Owen's Hydration Fund 💧" },
+    { id: 10, emojis: ["💰", "🍹"], title: "The Generosity Gambit: Round One.", desc: "Buy Owen a drink.", quote: "It's for science, and good karma (mostly science).", points: 1}, // Added points
+    { id: 11, emojis: ["💸", "🍸"], title: "The Double Down Delight: Round Two.", desc: "Buy Owen *another* drink.", quote: "Clearly, his thirst is legendary. Or he's just really good at this game.", points: 2}, // Added points
+    { id: 12, emojis: ["🤑", "🥂"], title: "The Triple Treat Triumph: Round Three.", desc: "Buy Owen a *third* drink.", quote: "At this point, it's less a challenge, more an investment in his happiness. And your score.", points: 3}, // Added points
+    
+    { type: "subheader", text: "📢 Public Embarrassment Tour 📢" },
+    { id: 13, emojis: ["🏨", "🗣️"], title: "Occidental Grand Entrance.", desc: "Upon entering the Occidental Hotel, enthusiastically declare:", quote: "“Let the crawl begin! May our memories be blurry and our drinks be strong!”"},
+    { id: 14, emojis: ["🥷", "🗣️"], title: "Uncle Ming's Mystic Welcome.", desc: "As you enter Uncle Ming’s, state with gravitas:", quote: "“We come seeking wisdom… and whiskey!” (Optional: perform a ninja bow or hands in prayer)."},
+    { id: 15, emojis: ["🚋", "🗣️"], title: "Light Rail Loudspeaker.", desc: "Boarding the Light Rail from Wynyard, announce:", quote: "“To the next round, we ride! Conduct us to chaos!”"},
+    { id: 16, emojis: ["⚓", "🗣️"], title: "The Ship Inn's Salty Salute.", desc: "Entering The Ship Inn, exclaim:", quote: "“Ahoy, Ship Inn! We’re here to sail the seas of spirits!”"},
+    { id: 17, emojis: ["🍽", "🗣️"], title: "Jackson's Dinner Declaration.", desc: "At Jackson’s on George, proclaim:", quote: "“Refuel the adventurers! Ale in hand, fork at the ready!”"},
+    { id: 18, emojis: ["🏰", "🗣️"], title: "Fortune's Fierce Proclamation.", desc: "Upon entering the Fortune of War, yell:", quote: "“To battle! We drink in the name of victory!” (Optional: mime a sword-in-the-air)."},
+    { id: 19, emojis: ["🍺", "🗣️"], title: "Munich Brauhaus Boisterous Bonjour.", desc: "Inside Munich Brauhaus, bellow:", quote: "“Prost! Bring forth the beer and the bratwurst!” (Ensure to yell 'Prost!' and clink imaginary glasses)."},
+    { id: 20, emojis: ["💃", "🗣️"], title: "Dance Floor Dynamo.", desc: "As you enter Cruise Bar and/or Orient Hotel, declare:", quote: "“We danced our way through drinks — now let’s drink our way through dance!”"}
+  ];
+
+  const rainbowColors = ["red", "orange", "yellow", "green", "blue", "indigo", "violet"];
+
+  const allChallenges = [...challenges, ...secretChallenges.filter(ch => ch.type !== 'subheader')];
+
+  // Sequence for revealing secret challenges (updated to use first emojis of Challenges 2, 3, 4)
+  const SECRET_EMOJI_SEQUENCE = ['cup_with_straw', 'back_arrow', 'sock']; // Mapped to data-emoji-code
+  let currentSequenceIndex = 0;
+  let lastClickTime = 0;
+  const SEQUENCE_TIMEOUT_MS = 1000; // 1 second to complete the sequence after the first click
+
+  function saveProgress() {
+    const state = {};
+    allChallenges.forEach(ch => {
+      const mainCheckbox = document.getElementById(`chk${ch.id}`);
+      if (mainCheckbox) state[`chk${ch.id}`] = mainCheckbox.checked;
+      const bonusCheckbox = document.getElementById(`chk${ch.id}b`);
+      if (bonusCheckbox) state[`chk${ch.id}b`] = bonusCheckbox.checked;
+    });
+    rainbowColors.forEach(color => {
+      const cb = document.getElementById(`rainbow-${color}`);
+      if (cb) state[`rainbow-${color}`] = cb.checked;
+    });
+    // Save riddle state
+    const riddleContainer = document.getElementById("riddle-container");
+    state[RIDDLE_HIDDEN_KEY] = riddleContainer.classList.contains("riddle-hidden");
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function loadProgress() {
+    const stateStr = localStorage.getItem(STORAGE_KEY);
+    if (!stateStr) return;
+    const state = JSON.parse(stateStr);
+    Object.entries(state).forEach(([key, val]) => {
+      const el = document.getElementById(key);
+      if (el) el.checked = val;
+    });
+
+    // Secret section will *always* start hidden on load.
+    const secretSection = document.getElementById("secret-challenge-section");
+    if (secretSection) {
+      secretSection.classList.remove("revealed"); // Ensure it's hidden
+    }
+
+    // Load riddle state
+    const riddleContainer = document.getElementById("riddle-container");
+    const showRiddleBtn = document.getElementById("show-riddle-btn");
+    if (state[RIDDLE_HIDDEN_KEY]) {
+        riddleContainer.classList.add("riddle-hidden");
+        showRiddleBtn.classList.add("visible");
+    } else {
+        riddleContainer.classList.remove("riddle-hidden");
+        showRiddleBtn.classList.remove("visible");
+    }
+
+    updateScore();
+  }
+
+  function createChallengeElement(ch) {
+    if (ch.type === "subheader") {
+      const subheaderDiv = document.createElement("div");
+      subheaderDiv.className = "secret-subheader";
+      subheaderDiv.textContent = ch.text;
+      return subheaderDiv;
+    }
+
+    const challengeItemDiv = document.createElement("div"); // Outer container for the challenge
+    challengeItemDiv.className = "challenge-item";
+    challengeItemDiv.id = `challenge-item-${ch.id}`; // Add ID for direct reference if needed
+
+    // Checkbox and its container (to make checkbox area clickable without affecting emojis)
+    const checkboxContainer = document.createElement("div");
+    checkboxContainer.className = "checkbox-container";
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.id = `chk${ch.id}`;
+    if (ch.id === 1) checkbox.disabled = true; // Still disable rainbow checkbox
+    checkboxContainer.appendChild(checkbox);
+    challengeItemDiv.appendChild(checkboxContainer);
+
+    // Emojis container
+    const emojisContainer = document.createElement("div");
+    emojisContainer.className = "emojis-container";
+    ch.emojis.forEach((e_str, index) => { // Added index to check for first emoji
+      const span = document.createElement("span");
+      span.className = "emoji";
+      span.textContent = e_str; // Use textContent for raw emoji string
+
+      // Apply secret trigger only to the FIRST emoji of specific challenges (Challenges 2, 3, 4)
+      if (index === 0) { // Only the very first emoji in the challenge's emoji list
+        if (ch.id === 2 && e_str === '🥤') {
+          span.classList.add('secret-trigger-emoji');
+          span.dataset.emojiCode = 'cup_with_straw';
+        } else if (ch.id === 3 && e_str === '🔙') {
+          span.classList.add('secret-trigger-emoji');
+          span.dataset.emojiCode = 'back_arrow';
+        } else if (ch.id === 4 && e_str === '🧦') {
+          span.classList.add('secret-trigger-emoji');
+          span.dataset.emojiCode = 'sock';
+        }
+      }
+      emojisContainer.appendChild(span);
+    });
+    challengeItemDiv.appendChild(emojisContainer);
+
+    // Challenge details (title and description)
+    const challengeDetailsDiv = document.createElement("div");
+    challengeDetailsDiv.className = "challenge-details";
+
+    const titleSpan = document.createElement("span");
+    titleSpan.className = "challenge-title";
+    titleSpan.textContent = ch.title;
+    // Make clicking the title also toggle the checkbox
+    titleSpan.onclick = () => {
+        const chkbox = document.getElementById(`chk${ch.id}`);
+        if (chkbox) chkbox.checked = !chkbox.checked;
+        updateScore();
+        saveProgress();
+    };
+    challengeDetailsDiv.appendChild(titleSpan);
+
+    const descDiv = document.createElement("div");
+    descDiv.className = "challenge-desc";
+    descDiv.textContent = ch.desc;
+    challengeDetailsDiv.appendChild(descDiv);
+
+    if (ch.quote) {
+      const quoteDiv = document.createElement("div");
+      quoteDiv.className = "secret-desc-new-line";
+      quoteDiv.textContent = ch.quote;
+      challengeDetailsDiv.appendChild(quoteDiv);
+    }
+
+    if (ch.rainbow) {
+      const colorContainer = document.createElement("div");
+      colorContainer.className = "rainbow";
+      const emojis = {
+        red: "🔴", orange: "🟠", yellow: "🟡", green: "🟢",
+        blue: "🔵", indigo: "🟣", violet: "🟣"
+      };
+      rainbowColors.forEach(color => {
+        const capitalized = color.charAt(0).toUpperCase() + color.slice(1);
+        // Use a label for individual rainbow checkboxes
+        const rainbowLabel = document.createElement('label');
+        rainbowLabel.innerHTML = `<input type="checkbox" id="rainbow-${color}">${emojis[color]} ${capitalized}`;
+        rainbowLabel.onchange = () => { updateScore(); saveProgress(); }; // Add change listener directly
+        colorContainer.appendChild(rainbowLabel);
+      });
+      const bonusDiv = document.createElement('div');
+      bonusDiv.className = 'bonus';
+      bonusDiv.textContent = "⭐ Bonus: Each additional colour beyond two.";
+      colorContainer.appendChild(bonusDiv);
+      challengeDetailsDiv.appendChild(colorContainer);
+    }
+
+    if (ch.bonus) {
+      const bonusContainer = document.createElement("div");
+      bonusContainer.className = "bonus";
+      const bonusLabel = document.createElement('label');
+      bonusLabel.innerHTML = `<input type="checkbox" id="chk${ch.id}b" ${ch.bonusAlwaysEnabled ? 'data-always' : 'disabled'} />⭐ Bonus: ${ch.bonus}`;
+      bonusLabel.onchange = () => { updateScore(); saveProgress(); }; // Add change listener directly
+      bonusContainer.appendChild(bonusLabel);
+      challengeDetailsDiv.appendChild(bonusContainer);
+    }
+
+    challengeItemDiv.appendChild(challengeDetailsDiv);
+
+    return challengeItemDiv;
+  }
+
+  function createChallenges() {
+    const mainContainer = document.getElementById("challenge-container");
+    const secretContainer = document.getElementById("secret-challenge-container");
+    mainContainer.innerHTML = "";
+    secretContainer.innerHTML = "";
+
+    challenges.forEach(ch => {
+      mainContainer.appendChild(createChallengeElement(ch));
+    });
+
+    let secretChallengesRenderedCount = 0;
+    secretChallenges.forEach(ch => {
+      secretContainer.appendChild(createChallengeElement(ch));
+      if (ch.type !== 'subheader') {
+        secretChallengesRenderedCount++;
+      }
+    });
+    console.log(`[DEBUG] Attempted to render ${secretChallengesRenderedCount} secret challenges (excluding subheaders). Expected: ${secretChallenges.filter(c => c.type !== 'subheader').length}`);
+  }
+
+  function updateScore() {
+    let mainChallengesCompleted = 0;
+    let bonusPointsEarned = 0;
+    let rainbowColorsChecked = 0;
+    let secretChallengesScore = 0; // Changed from secretChallengesCompleted to secretChallengesScore
+
+    rainbowColors.forEach(color => {
+      const cb = document.getElementById("rainbow-" + color);
+      if (cb && cb.checked) rainbowColorsChecked++;
+    });
+
+    const rainbowMainCheckbox = document.getElementById("chk1");
+    if (rainbowMainCheckbox) {
+      if (rainbowColorsChecked >= 2) {
+        if (!rainbowMainCheckbox.checked) rainbowMainCheckbox.checked = true;
+        if (rainbowColorsChecked > 2) bonusPointsEarned += (rainbowColorsChecked - 2);
+      } else {
+        rainbowMainCheckbox.checked = false;
+      }
+    }
+
+    const secretSection = document.getElementById("secret-challenge-section");
+    const isSecretSectionRevealed = secretSection.classList.contains("revealed");
+    const secretChallengesTracker = document.getElementById("secret-challenges-count");
+
+    // Recalculate mainChallengesCompleted and bonusPointsEarned based on non-secret challenges
+    challenges.forEach(ch => {
+        const mainCheckbox = document.getElementById("chk" + ch.id);
+        const bonusCheckbox = document.getElementById("chk" + ch.id + "b");
+
+        if (mainCheckbox && mainCheckbox.checked && ch.id !== 1) { // Exclude rainbow challenge, handled separately
+            mainChallengesCompleted++;
+        }
+        if (bonusCheckbox && bonusCheckbox.checked) {
+            bonusPointsEarned++;
+        }
+    });
+    // Add rainbow challenge if checked
+    if (rainbowMainCheckbox && rainbowMainCheckbox.checked) {
+        mainChallengesCompleted++;
+    }
+
+
+    // Calculate score for secret challenges
+    let secretChallengesCount = 0; // Number of secret challenges completed (for display)
+    let maxSecretChallengesPoints = 0; // Maximum possible points from secret challenges
+    secretChallenges.filter(ch => ch.type !== 'subheader').forEach(ch => {
+        maxSecretChallengesPoints += ch.points || 1; // Add points or default to 1 if not specified
+        const mainCheckbox = document.getElementById("chk" + ch.id);
+        if (mainCheckbox && mainCheckbox.checked) {
+            if (isSecretSectionRevealed) {
+                secretChallengesScore += ch.points || 1; // Add points for completed secret challenges
+                secretChallengesCount++; // Increment count for display
+            }
+        }
+    });
+
+    let maxMainChallengesPossible = challenges.length;
+    let maxBonusPointsPossible = 0;
+    challenges.forEach(ch => {
+        if (ch.bonus && ch.id !== 1) {
+            maxBonusPointsPossible++;
+        }
+    });
+    maxBonusPointsPossible += Math.max(0, rainbowColors.length - 2);
+
+
+    let maxTotalScorePossible = maxMainChallengesPossible + maxBonusPointsPossible;
+    if (isSecretSectionRevealed) {
+        maxTotalScorePossible += maxSecretChallengesPoints; // Add secret challenge points to total if revealed
+    }
+
+    const currentTotalScore = mainChallengesCompleted + bonusPointsEarned + secretChallengesScore; // Use secretChallengesScore here
+
+    document.getElementById("main-count").textContent = `✔️ Challenges Completed: ${mainChallengesCompleted} / ${challenges.length}`;
+    document.getElementById("bonus-count").textContent = `⭐ Bonus Points Earned: ${bonusPointsEarned} / ${maxBonusPointsPossible}`;
+    document.getElementById("total-score").textContent = `🏆 Total Score: ${currentTotalScore} / ${maxTotalScorePossible}`;
+
+    if (secretChallengesTracker) {
+        if (isSecretSectionRevealed) {
+            secretChallengesTracker.textContent = `🎁 Secret Challenges Completed: ${secretChallengesCount} / ${secretChallenges.filter(ch => ch.type !== 'subheader').length} (Score: ${secretChallengesScore} / ${maxSecretChallengesPoints})`;
+            secretChallengesTracker.style.display = 'block';
+            setTimeout(() => secretChallengesTracker.style.opacity = '1', 10);
+        } else {
+            secretChallengesTracker.style.opacity = '0';
+            setTimeout(() => secretChallengesTracker.style.display = 'none', 700);
+        }
+    }
+  }
+
+  // New functions for riddle visibility
+  function hideRiddle() {
+      const riddleContainer = document.getElementById("riddle-container");
+      const showRiddleBtn = document.getElementById("show-riddle-btn");
+      riddleContainer.classList.add("riddle-hidden");
+      showRiddleBtn.classList.add("visible");
+      saveProgress();
+  }
+
+  function showRiddle() {
+      const riddleContainer = document.getElementById("riddle-container");
+      const showRiddleBtn = document.getElementById("show-riddle-btn");
+      riddleContainer.classList.remove("riddle-hidden");
+      showRiddleBtn.classList.remove("visible");
+      saveProgress();
+  }
+
+  function resetProgress() {
+    localStorage.removeItem(STORAGE_KEY); // Removes all challenge progress
+    localStorage.removeItem(RIDDLE_HIDDEN_KEY); // Ensures riddle reappears on reset
+
+    allChallenges.forEach(ch => {
+      const chk = document.getElementById(`chk${ch.id}`);
+      if (chk) chk.checked = false;
+      const bchk = document.getElementById(`chk${ch.id}b`);
+      if (bchk) {
+        bchk.checked = false;
+        if (!bchk.hasAttribute("data-always")) {
+          bchk.disabled = true;
+        }
+      }
+    });
+    rainbowColors.forEach(color => {
+      const cb = document.getElementById(`rainbow-${color}`);
+      if (cb) cb.checked = false;
+    });
+
+    const secretSection = document.getElementById("secret-challenge-section");
+    if (secretSection) {
+      secretSection.classList.remove("revealed"); // Ensure it's hidden on reset
+    }
+
+    const secretChallengesTracker = document.getElementById("secret-challenges-count");
+    if (secretChallengesTracker) {
+        secretChallengesTracker.style.opacity = '0';
+        setTimeout(() => secretChallengesTracker.style.display = 'none', 700); // Allow transition to complete
+        secretChallengesTracker.textContent = `🎁 Secret Challenges Completed: 0 / ${secretChallenges.filter(ch => ch.type !== 'subheader').length}`;
+    }
+
+    // Reset sequence tracking
+    currentSequenceIndex = 0;
+    lastClickTime = 0;
+
+    // Show riddle on reset
+    showRiddle();
+
+    updateScore();
+    // No need to saveProgress here, as it's called by showRiddle() and loadProgress() will run on next page load
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    createChallenges();
+    loadProgress(); // This will now handle both challenge and riddle states
+
+    // Event listeners for riddle buttons
+    document.getElementById("hide-riddle-btn").addEventListener("click", hideRiddle);
+    document.getElementById("show-riddle-btn").addEventListener("click", showRiddle);
+
+    // Event delegation for emoji clicks (for secret challenge reveal)
+    document.getElementById("challenge-container").addEventListener("click", (event) => {
+        const target = event.target;
+
+        // Check if the clicked element is one of our secret trigger emojis
+        if (target.classList.contains('secret-trigger-emoji')) {
+            const emojiCode = target.dataset.emojiCode; // Get the custom data attribute
+
+            const currentTime = Date.now();
+
+            // If the current click is within the timeout window OR it's the very first click in a new sequence
+            if (currentTime - lastClickTime < SEQUENCE_TIMEOUT_MS || currentSequenceIndex === 0) {
+                if (emojiCode === SECRET_EMOJI_SEQUENCE[currentSequenceIndex]) {
+                    currentSequenceIndex++;
+                    lastClickTime = currentTime; // Update last click time
+                    console.log(`[Secret Sequence] Correct click: ${emojiCode}. Index: ${currentSequenceIndex}`);
+
+                    if (currentSequenceIndex === SECRET_EMOJI_SEQUENCE.length) {
+                        // Sequence completed!
+                        const secretSection = document.getElementById("secret-challenge-section");
+                        const isCurrentlyRevealed = secretSection.classList.contains("revealed");
+
+                        // Toggle visibility
+                        if (isCurrentlyRevealed) {
+                            secretSection.classList.remove("revealed");
+                        } else {
+                            secretSection.classList.add("revealed");
+                        }
+                        updateScore();
+                        currentSequenceIndex = 0; // Reset for next time, whether it revealed or hid
+                        lastClickTime = 0;
+                        console.log("[Secret Sequence] Revealed/Hid secret section!");
+                    }
+                } else {
+                    // Incorrect click in sequence, reset
+                    console.log(`[Secret Sequence] Incorrect click: ${emojiCode}. Resetting sequence.`);
+                    currentSequenceIndex = 0;
+                    lastClickTime = 0;
+                }
+            } else {
+                // Timeout, reset sequence (unless this click starts a new sequence)
+                console.log("[Secret Sequence] Timeout. Resetting sequence.");
+                currentSequenceIndex = 0;
+                lastClickTime = 0;
+                // If this click is the start of the sequence
+                if (emojiCode === SECRET_EMOJI_SEQUENCE[0]) {
+                    currentSequenceIndex = 1;
+                    lastClickTime = currentTime;
+                    console.log(`[Secret Sequence] Started new sequence with: ${emojiCode}`);
+                }
+            }
+        }
+    });
+
+    document.getElementById("challenge-container").addEventListener("change", e => {
+      const id = e.target.id;
+
+      // This part handles the main checkbox and its linked bonus checkbox
+      if (id.startsWith("chk") && !id.endsWith("b")) { // Main challenge checkbox
+        const bonusBox = document.getElementById(id + "b");
+        if (bonusBox && !bonusBox.hasAttribute("data-always")) {
+          bonusBox.disabled = !e.target.checked;
+          if (!e.target.checked) bonusBox.checked = false;
+        }
+      }
+      // Rainbow checkboxes and bonus checkboxes now have their own onchange listeners
+
+      updateScore();
+      saveProgress();
+    });
+    
+    // Listen for changes on secret challenge checkboxes
+    // This is explicitly on secret-challenge-container because they are dynamically loaded
+    document.getElementById("secret-challenge-container").addEventListener("change", e => {
+        updateScore();
+        saveProgress();
+    });
+
+    document.getElementById("reset-btn").addEventListener("click", () => {
+      if (confirm("Are you sure you want to reset all progress? This will also re-hide the secret challenges and show the riddle.")) {
+        resetProgress();
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
