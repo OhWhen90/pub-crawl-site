@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
+  <title>The Grand Tavern Quest</title>
+  <style>
+    body {
+      font-family: 'Georgia', serif; /* More traditional serif font */
+      font-size: 18px;
+      max-width: 650px; /* Slightly wider for an epic feel */
+      margin: 0 auto;
+      padding: 1.5rem;
+      background: #fdf5e6 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><text x="0" y="50" font-family="serif" font-size="20" fill="%23e0d8c9" transform="rotate(20 50 50)">📜</text></svg>'); /* Subtle parchment-like background */
+      background-size: 50px; /* Smaller, more subtle pattern */
+      background-attachment: fixed;
+      color: #3e2723; /* Deep brown text */
+    }
+    h1, h2 {
+      text-align: center;
+      font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif; /* Elegant, old-world font */
+      color: #6d4c41; /* Muted, earthy tone */
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2); /* Subtle shadow for depth */
+      margin-bottom: 1.5rem;
+    }
+    h1 {
+      font-size: 2.8em;
+      letter-spacing: 2px; /* A bit of spacing for grandness */
+    }
+    h2 {
+        font-size: 2em;
+        color: #5d4037; /* Darker brown for subheadings */
+    }
+
+    /* New style for the riddle container */
+    #riddle-container {
+      text-align: center;
+      margin: 1.5rem 0 2.5rem; /* More spacing */
+      padding: 1.5rem;
+      background-color: #f7ede3; /* Lighter parchment tone */
+      border: 1px solid #d7c9b8; /* Aged paper border */
+      border-radius: 6px; /* Soft edges */
+      font-style: italic;
+      color: #5d4037; /* Consistent earthy text */
+      font-size: 1.15em;
+      line-height: 1.6;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.1); /* Slight lift */
+    }
+    #riddle-answer {
+      font-weight: bold;
+      margin-top: 1.5em;
+      color: #4e342e; /* Even darker for the answer */
+      font-size: 1.05em;
+    }
+
+    label {
+      display: flex;
+      align-items: flex-start;
+      padding: 0.8rem 0; /* More padding for legibility */
+      font-size: 1.25rem; /* Larger challenge text */
+      cursor: pointer;
+      border-bottom: 1px dashed #d7c9b8; /* Subtle separator */
+      margin-bottom: 0.5rem;
+    }
+    label:last-of-type {
+        border-bottom: none; /* No border for the last one */
+    }
+    input[type="checkbox"] {
+      margin-right: 1.2rem; /* More space */
+      transform: scale(1.4); /* Larger checkboxes */
+      accent-color: #6d4c41; /* Themed checkbox color */
+    }
+    .emoji {
+      margin-right: 0.5rem; /* More space */
+      font-size: 1.6rem; /* Larger emojis */
+    }
+    .challenge-title {
+      font-weight: bold;
+      color: #4e342e; /* Stronger title color */
+    }
+    .challenge-desc {
+      margin-left: 3.2rem; /* Adjusted indentation */
+      font-size: 1.05rem;
+      color: #6d4c41; /* Softer description color */
+      margin-top: -0.2rem; /* Fine-tuning alignment */
+    }
+    .bonus, .rainbow {
+      margin-left: 3.2rem; /* Adjusted indentation */
+      font-size: 1rem;
+      color: #8d6e63; /* Lighter color for bonus/rainbow */
+      font-style: italic; /* Emphasize these as extras */
+    }
+    .rainbow input[type="checkbox"],
+    .bonus input[type="checkbox"] {
+      transform: scale(1.2); /* Slightly smaller for sub-checkboxes */
+      margin-right: 0.5rem;
+      accent-color: #8d6e63; /* Themed color */
+    }
+    .rainbow label {
+      display: block;
+      width: 100%;
+      margin-top: 0.5rem;
+    }
+    #reset-btn {
+      margin: 3rem auto 1.5rem; /* More spacing */
+      display: block;
+      font-size: 1.4rem; /* Larger button */
+      background: #8b0000; /* Deep red for warning */
+      color: #fdf5e6; /* Parchment color for text */
+      border: 2px solid #5a0000; /* Darker border */
+      padding: 0.8rem 2rem;
+      border-radius: 8px; /* Slightly rounded */
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.3s ease, border-color 0.3s ease;
+      font-family: 'Georgia', serif;
+      letter-spacing: 0.5px;
+    }
+    #reset-btn:hover {
+      background: #a52a2a; /* Brownish red on hover */
+      border-color: #7b0000;
+    }
+
+    /* Style for the secret challenges container */
+    #secret-challenge-section {
+      opacity: 0;
+      max-height: 0;
+      overflow: hidden; 
+      transition: opacity 0.9s ease-in-out, max-height 0.9s ease-in-out; /* Slower, more mysterious transition */
+      pointer-events: none; 
+      margin-top: 3rem; /* More spacing */
+      border-top: 3px double #b0a090; /* Doubled, aged border */
+      padding-top: 1.5rem;
+    }
+    #secret-challenge-section.revealed {
+      opacity: 1;
+      max-height: 4000px; /* Even more generous for ultimate safety */
+      pointer-events: auto;
+    }
+    #secret-challenge-section h2 {
+        color: #5a2a8b; /* Maintain a distinct mystical purple for secret heading */
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    }
+    /* Style for new subheadings within the secret section */
+    .secret-subheader {
+        text-align: center;
+        color: #4a1c7c; 
+        margin-top: 2rem; /* More spacing */
+        margin-bottom: 1.2rem;
+        font-size: 1.4em;
+        font-weight: bold;
+        letter-spacing: 1px;
+    }
+
+    /* Style for the secret challenge tracker, now part of main score display */
+    #secret-challenges-count {
+      text-align: center;
+      font-size: 1.15rem;
+      margin-bottom: 0.8rem; 
+      color: #5a2a8b; 
+      opacity: 0;
+      display: none;
+      transition: opacity 0.7s ease-in-out;
+    }
+    /* Make it visible when the secret section is revealed */
+    #secret-challenge-section.revealed ~ div #secret-challenges-count { 
+        opacity: 1;
+        display: block;
+    }
+    /* Added style for the new line in secret challenge descriptions */
+    .secret-desc-new-line {
+        display: block; 
+        margin-left: 3.2rem; /* Align with main description */
+        margin-top: 0.4em; 
+        font-style: italic; 
+        color: #7a6a60; /* Slightly lighter for quotes */
+    }
+    /* Styling for the score display */
+    div[style*="text-align: center;"] {
+        background-color: #f7ede3;
+        padding: 1rem;
+        border-radius: 6px;
+        border: 1px solid #d7c9b8;
+        box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+        color: #4e342e; /* Dark brown for scores */
+        font-weight: bold;
+        margin-bottom: 1rem;
+    }
+    div[style*="text-align: center;"] div {
+        margin-bottom: 0.5rem;
+    }
+    div[style*="text-align: center;"] div:last-child {
+        margin-bottom: 0;
+    }
+
+    /* Secret trigger styling for subtle visibility */
+    #secret-trigger {
+        cursor: pointer;
+        /* Optional: give it a slight style change on hover if you want to hint */
+        /* text-decoration: underline dotted; */
+        /* text-decoration-color: #8d6e63; */
+    }
+    /* Hide the text content of the <h1> when using the span for the 's' */
+    #main-heading {
+      font-size: 0; /* Hide the default text of the H1 */
+      line-height: 0;
+      height: 0;
+      overflow: hidden; /* Ensure it's not visible */
+    }
+    /* Make the span content visible */
+    #main-heading span {
+      font-size: 2.8em; /* Re-apply original font size to the span */
+      line-height: 1;
+      height: auto;
+      overflow: visible;
+      display: inline-block; /* Essential to make it visible */
+    }
+  </style>
+</head>
+<body>
+
+<h1 id="main-heading">The Grand Tavern Que<span id="secret-trigger">s</span>t</h1>
+
+<div id="riddle-container">
+  Hear ye, brave adventurers, a scroll foretells:<br>
+  A list of trials, where courage dwells.<br>
+  Ten tasks laid bare, for glory and mirth,<br>
+  To prove your spirit, and claim your worth.<br><br>
+
+  Your progress tallied, your feats known afar,<br>
+  But a deeper truth, does this parchment bar.<br>
+  No ancient lore, nor wizard's plea,<br>
+  Just three swift strikes, to set the secrets free.
+  <br><br>
+  What ancient artifact holds this grand design,<br>
+  And mysteries hidden, for spirits divine?
+  <div id="riddle-answer">... The Quest Scroll!</div>
+</div>
+
+<div id="challenge-container"></div>
+
+<div id="secret-challenge-section">
+    <h2 style="text-align: center;">📜 Unveiled Prophecies & Hidden Trials! 📜</h2>
+    <div id="secret-challenge-container"></div>
+</div>
+
+<div style="text-align: center; margin-top: 2rem; font-size: 1.2rem;">
+  <div id="main-count">✔️ Trials Completed: 0 / 10</div>
+  <div id="bonus-count">⭐ Bonus Feats Earned: 0 / 0</div>
+  <div id="secret-challenges-count">🎁 Hidden Prophecies Fulfilled: 0 / 3</div>
+  <div id="total-score">🏆 Total Valor Score: 0 / 10</div>
+</div>
+
+<button id="reset-btn">Reset Quest</button>
+
+<script>
+  const STORAGE_KEY = "ancientQuestProgress"; // Renamed storage key
+  const SECRET_SECTION_KEY = "ancientQuestSecretsRevealed"; // Renamed storage key
+
+  const challenges = [
+    { id: 0, emojis: ["🔁", "👕"], title: "The Shifting Garb.", desc: "Exchange a piece of attire with a fellow adventurer for the duration of a single tavern visit." },
+    { id: 1, emojis: ["🌈", "🍹"], title: "Sip the Prismatic Brew.", desc: "Partake of elixirs boasting two distinct hues of the rainbow's spectrum.", rainbow: true },
+    { id: 2, emojis: ["🥤", "🍸"], title: "The Hydra's Thirst.", desc: "Quaff your entire draught using no fewer than three drinking reeds simultaneously." },
+    { id: 3, emojis: ["🔙", "🚶‍♂️"], title: "The Backward Pilgrimage.", desc: "Journey between two waypoints of the crawl by facing the rear. Ensure a steadfast guide attends you!" },
+    { id: 4, emojis: ["🧦", "✋"], title: "The Sock Puppet Familiar.", desc: "Adorn your right hand with a sock throughout your stay at one establishment. Introduce it as your new drinking companion." },
+    { id: 5, emojis: ["🕺", "💃"], title: "Dance of Dueling Spirits.", desc: "Engage in or initiate a spirited dance-off.", bonus: "If you emerge victorious or gain the acclamation of strangers." },
+    { id: 6, emojis: ["🤫", "📎"], title: "The Stealthy Fastener.", desc: "Affix your peg upon an unsuspecting soul, unnoticed, for fifteen minutes. Proof shall be demanded!", bonus: "Your quarry departs a tavern still bearing your mark.", bonusAlwaysEnabled: true },
+    { id: 7, emojis: ["🎭", "🗣️"], title: "Whispers of Distant Lands.", desc: "Order your chosen libation whilst speaking in a distinct, foreign tongue or dialect.", bonus: "Maintain the guise until your draught is fully consumed." },
+    { id: 8, emojis: ["📸", "🤳"], title: "The Innkeeper's Grin.", desc: "Capture a magical self-portrait alongside either a barkeep or a guardian of the gates.", bonus: "If they grace the portrait with a smile." },
+    { id: 9, emojis: ["🍻", "🥂"], title: "The Proclamation of Camaraderie.", desc: "Approach a stranger or unknown gathering and deliver a fervent, brief toast in their honor.", bonus: "They return the salutation in kind." }
+  ];
+
+  const secretChallenges = [
+    { type: "subheader", text: "💧 Owen's Ambrosia Offering 💧" },
+    { id: 10, emojis: ["💰", "🍹"], title: "The Benefactor's First Boon.", desc: "Present Owen with a restorative draught.", quote: "For the prosperity of the realm, and a boost to your valor."},
+    { id: 11, emojis: ["💸", "🍸"], title: "The Sustainer's Second Gift.", desc: "Procure Owen *another* refreshing concoction.", quote: "His parched spirit demands further tribute, and your legend grows."},
+    { id: 12, emojis: ["🤑", "🥂"], title: "The Patron's Third Libation.", desc: "Bestow upon Owen a *third* beverage.", quote: "Such generosity shall be etched into the annals of this quest, and your score swells!"},
+    
+    { type: "subheader", text: "📢 The Bard's Boisterous Declarations 📢" },
+    { id: 13, emojis: ["🏨", "🗣️"], title: "The Occidental's Grand Overture.", desc: "Upon crossing the threshold of The Occidental Grand Inn, declare with fervent enthusiasm:", quote: "“Let the grand quest commence! May our tales be epic, and our flagons never empty!”"},
+    { id: 14, emojis: ["🥷", "🗣️"], title: "Uncle Ming's Mystical Greeting.", desc: "As you enter the hidden lair of Uncle Ming’s, intone with gravitas:", quote: "“We seek ancient wisdom… and potent spirits!” (Optional: perform a silent, respectful bow or gesture of contemplation)."},
+    { id: 15, emojis: ["🚋", "🗣️"], title: "The Iron Steed's Loud Proclamation.", desc: "Upon boarding the Light Rail from Wynyard station, announce to all within earshot:", quote: "“To the next proving ground, we ride! Convey us to chaos and revelry!”"},
+    { id: 16, emojis: ["⚓", "🗣️"], title: "The Seaworthy Salute.", desc: "Upon entering The Ship Inn, exclaim with a hearty voice:", quote: "“Ahoy, Ship Inn! We arrive to navigate the tempestuous waters of spirits!”"},
+    { id: 17, emojis: ["🍽", "🗣️"], title: "Jackson's Sustenance Command.", desc: "At Jackson’s on George, proclaim loudly:", quote: "“Replenish the quest-takers! Ale in hand, blade (or fork) at the ready!”"},
+    { id: 18, emojis: ["🏰", "🗣️"], title: "Fortune's Roaring Challenge.", desc: "Upon entering the formidable Fortune of War, bellow:", quote: "“To battle! We drink in the name of victory and bountiful spoils!” (Optional: brandish an imaginary sword towards the heavens)."},
+    { id: 19, emojis: ["🍺", "🗣️"], title: "Munich Brauhaus's Mighty Greeting.", desc: "Within the grand halls of Munich Brauhaus, declare with a booming voice:", quote: "“Prost! Bring forth the finest brews and the heartiest provisions!” (Ensure to bellow 'Prost!' and clink imaginary tankards)."},
+    { id: 20, emojis: ["💃", "🗣️"], title: "The Reveler's Rhythm.", desc: "As you step into Cruise Bar and/or Orient Hotel, proclaim:", quote: "“Our feet did carry us through revelry — now let our spirits guide us through dance!”"}
+  ];
+
+  const rainbowColors = ["red", "orange", "yellow", "green", "blue", "indigo", "violet"];
+
+  const allChallenges = [...challenges, ...secretChallenges.filter(ch => ch.type !== 'subheader')];
+
+  let clickCount = 0;
+  let clickTimeout = null;
+  const TRIPLE_CLICK_THRESHOLD_MS = 300;
+
+  function saveProgress() {
+    const state = {};
+    allChallenges.forEach(ch => { 
+      const mainCheckbox = document.getElementById(`chk${ch.id}`);
+      if (mainCheckbox) state[`chk${ch.id}`] = mainCheckbox.checked;
+      const bonusCheckbox = document.getElementById(`chk${ch.id}b`);
+      if (bonusCheckbox) state[`chk${ch.id}b`] = bonusCheckbox.checked;
+    });
+    rainbowColors.forEach(color => {
+      const cb = document.getElementById(`rainbow-${color}`);
+      if (cb) state[`rainbow-${color}`] = cb.checked;
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function saveSecretSectionRevealedStatus(isRevealed) {
+    localStorage.setItem(SECRET_SECTION_KEY, JSON.stringify(isRevealed));
+  }
+
+  function loadProgress() {
+    const stateStr = localStorage.getItem(STORAGE_KEY);
+    if (!stateStr) return;
+    const state = JSON.parse(stateStr);
+    Object.entries(state).forEach(([key, val]) => {
+      const el = document.getElementById(key);
+      if (el) el.checked = val;
+    });
+
+    const isSecretSectionRevealed = JSON.parse(localStorage.getItem(SECRET_SECTION_KEY) || "false");
+    const secretSection = document.getElementById("secret-challenge-section");
+
+    if (secretSection && isSecretSectionRevealed) {
+      secretSection.classList.add("revealed");
+    }
+    updateScore(); 
+  }
+
+  function createChallengeElement(ch) {
+    if (ch.type === "subheader") {
+      const subheaderDiv = document.createElement("div");
+      subheaderDiv.className = "secret-subheader";
+      subheaderDiv.textContent = ch.text;
+      return subheaderDiv;
+    }
+
+    const label = document.createElement("label");
+    label.id = `challenge-item-${ch.id}`;
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.id = `chk${ch.id}`;
+    if (ch.id === 1) checkbox.disabled = true;
+    label.appendChild(checkbox);
+
+    ch.emojis.forEach(e => {
+      const span = document.createElement("span");
+      span.className = "emoji";
+      span.textContent = e;
+      label.appendChild(span);
+    });
+
+    const div = document.createElement("div");
+    const titleSpan = document.createElement("span");
+    titleSpan.className = "challenge-title";
+    titleSpan.textContent = ch.title;
+    div.appendChild(titleSpan);
+
+    const descDiv = document.createElement("div");
+    descDiv.className = "challenge-desc";
+    descDiv.textContent = ch.desc;
+    div.appendChild(descDiv);
+
+    if (ch.quote) {
+      const quoteDiv = document.createElement("div");
+      quoteDiv.className = "secret-desc-new-line";
+      quoteDiv.textContent = ch.quote;
+      div.appendChild(quoteDiv);
+    }
+
+    if (ch.rainbow) {
+      const colorContainer = document.createElement("div");
+      colorContainer.className = "rainbow";
+      const emojis = {
+        red: "🔴", orange: "🟠", yellow: "🟡", green: "🟢",
+        blue: "🔵", indigo: "🟣", violet: "🟣"
+      };
+      rainbowColors.forEach(color => {
+        const capitalized = color.charAt(0).toUpperCase() + color.slice(1);
+        colorContainer.innerHTML += `<label><input type="checkbox" id="rainbow-${color}">${emojis[color]} ${capitalized}</label>`;
+      });
+      colorContainer.innerHTML += `<div class="bonus" style="margin-top:0.3rem;">⭐ Bonus: Each additional colour beyond two.</div>`;
+      div.appendChild(colorContainer);
+    }
+
+    if (ch.bonus) {
+      const bonusContainer = document.createElement("div");
+      bonusContainer.className = "bonus";
+      bonusContainer.innerHTML = `<input type="checkbox" id="chk${ch.id}b" ${ch.bonusAlwaysEnabled ? 'data-always' : 'disabled'} />⭐ Bonus: ${ch.bonus}`;
+      div.appendChild(bonusContainer);
+    }
+
+    label.appendChild(div);
+    return label;
+  }
+
+  function createChallenges() {
+    const mainContainer = document.getElementById("challenge-container");
+    const secretContainer = document.getElementById("secret-challenge-container");
+    mainContainer.innerHTML = "";
+    secretContainer.innerHTML = "";
+
+    challenges.forEach(ch => {
+      mainContainer.appendChild(createChallengeElement(ch));
+    });
+
+    let secretChallengesRenderedCount = 0; 
+    secretChallenges.forEach(ch => {
+      secretContainer.appendChild(createChallengeElement(ch));
+      if (ch.type !== 'subheader') {
+        secretChallengesRenderedCount++;
+      }
+    });
+    console.log(`[DEBUG] Attempted to render ${secretChallengesRenderedCount} secret challenges (excluding subheaders). Expected: ${secretChallenges.filter(c => c.type !== 'subheader').length}`);
+  }
+
+  function updateScore() {
+    let mainChallengesCompleted = 0;
+    let bonusPointsEarned = 0;
+    let rainbowColorsChecked = 0;
+    let secretChallengesCompleted = 0;
+
+    rainbowColors.forEach(color => {
+      const cb = document.getElementById("rainbow-" + color);
+      if (cb && cb.checked) rainbowColorsChecked++;
+    });
+
+    const rainbowMainCheckbox = document.getElementById("chk1");
+    if (rainbowMainCheckbox) {
+      if (rainbowColorsChecked >= 2) {
+        if (!rainbowMainCheckbox.checked) rainbowMainCheckbox.checked = true;
+        if (rainbowColorsChecked > 2) bonusPointsEarned += (rainbowColorsChecked - 2);
+      } else {
+        rainbowMainCheckbox.checked = false;
+      }
+    }
+
+    const secretSection = document.getElementById("secret-challenge-section");
+    const isSecretSectionRevealed = secretSection.classList.contains("revealed"); 
+    const secretChallengesTracker = document.getElementById("secret-challenges-count");
+
+    allChallenges.forEach(ch => { 
+      const mainCheckbox = document.getElementById("chk" + ch.id);
+      const bonusCheckbox = document.getElementById("chk" + ch.id + "b");
+
+      const isSecret = ch.id >= 10; 
+
+      if (mainCheckbox && mainCheckbox.checked) {
+          if (isSecret && isSecretSectionRevealed) {
+              secretChallengesCompleted++;
+          } else if (!isSecret && ch.id !== 1) { 
+              mainChallengesCompleted++;
+          }
+      }
+      if (bonusCheckbox && bonusCheckbox.checked) {
+          if (isSecret && isSecretSectionRevealed) {
+            bonusPointsEarned++;
+          } else if (!isSecret) {
+            bonusPointsEarned++;
+          }
+      }
+    });
+
+    if (rainbowMainCheckbox && rainbowMainCheckbox.checked) {
+        mainChallengesCompleted++;
+    }
+
+    let maxMainChallengesPossible = challenges.length;
+    let maxBonusPointsPossible = 0;
+    challenges.forEach(ch => {
+        if (ch.bonus && ch.id !== 1) {
+            maxBonusPointsPossible++;
+        }
+    });
+    maxBonusPointsPossible += Math.max(0, rainbowColors.length - 2);
+    
+    let maxTotalScorePossible = maxMainChallengesPossible + maxBonusPointsPossible;
+    let actualSecretChallengesCount = secretChallenges.filter(ch => ch.type !== 'subheader').length; 
+
+    if (isSecretSectionRevealed) {
+        maxTotalScorePossible += actualSecretChallengesCount;
+    } 
+
+    const currentTotalScore = mainChallengesCompleted + bonusPointsEarned + secretChallengesCompleted;
+
+    document.getElementById("main-count").textContent = `✔️ Trials Completed: ${mainChallengesCompleted} / ${challenges.length}`;
+    document.getElementById("bonus-count").textContent = `⭐ Bonus Feats Earned: ${bonusPointsEarned} / ${maxBonusPointsPossible}`;
+    document.getElementById("total-score").textContent = `🏆 Total Valor Score: ${currentTotalScore} / ${maxTotalScorePossible}`;
+
+    if (secretChallengesTracker) {
+        if (isSecretSectionRevealed) {
+            secretChallengesTracker.textContent = `🎁 Hidden Prophecies Fulfilled: ${secretChallengesCompleted} / ${actualSecretChallengesCount}`; 
+            secretChallengesTracker.style.display = 'block';
+            setTimeout(() => secretChallengesTracker.style.opacity = '1', 10); 
+        } else {
+            secretChallengesTracker.style.opacity = '0';
+            setTimeout(() => secretChallengesTracker.style.display = 'none', 900); /* Matched new transition time */
+        }
+    }
+  }
+
+  function resetProgress() {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(SECRET_SECTION_KEY);
+
+    allChallenges.forEach(ch => { 
+      const chk = document.getElementById(`chk${ch.id}`);
+      if (chk) chk.checked = false;
+      const bchk = document.getElementById(`chk${ch.id}b`);
+      if (bchk) {
+        bchk.checked = false;
+        if (!bchk.hasAttribute("data-always")) {
+          bchk.disabled = true;
+        }
+      }
+    });
+    rainbowColors.forEach(color => {
+      const cb = document.getElementById(`rainbow-${color}`);
+      if (cb) cb.checked = false;
+    });
+
+    const secretSection = document.getElementById("secret-challenge-section");
+    if (secretSection) {
+      secretSection.classList.remove("revealed");
+    }
+
+    const secretChallengesTracker = document.getElementById("secret-challenges-count");
+    if (secretChallengesTracker) {
+        secretChallengesTracker.style.opacity = '0';
+        secretChallengesTracker.style.display = 'none';
+        secretChallengesTracker.textContent = `🎁 Hidden Prophecies Fulfilled: 0 / ${secretChallenges.filter(ch => ch.type !== 'subheader').length}`; 
+    }
+
+    updateScore();
+    saveProgress();
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    createChallenges();
+    loadProgress(); 
+
+    // Event listener on the new 'secret-trigger' span (the 's')
+    document.getElementById("secret-trigger").addEventListener("click", (event) => {
+      event.stopPropagation(); // Prevents clicks on the 's' from affecting parent elements if they had listeners
+
+      clickCount++;
+      if (clickTimeout) {
+        clearTimeout(clickTimeout);
+      }
+
+      clickTimeout = setTimeout(() => {
+        if (clickCount === 3) {
+          const secretSection = document.getElementById("secret-challenge-section");
+          const isCurrentlyRevealed = secretSection.classList.contains("revealed");
+
+          if (isCurrentlyRevealed) {
+            secretSection.classList.remove("revealed");
+            saveSecretSectionRevealedStatus(false); 
+          } else {
+            secretSection.classList.add("revealed");
+            saveSecretSectionRevealedStatus(true); 
+          }
+          updateScore(); 
+        }
+        clickCount = 0;
+      }, TRIPLE_CLICK_THRESHOLD_MS);
+    });
+
+    document.addEventListener("change", e => {
+      const id = e.target.id;
+
+      if (id.startsWith("chk") && !id.endsWith("b")) {
+        const bonusBox = document.getElementById(id + "b");
+        if (bonusBox && !bonusBox.hasAttribute("data-always")) {
+          bonusBox.disabled = !e.target.checked;
+          if (!e.target.checked) bonusBox.checked = false;
+        }
+      }
+
+      updateScore();
+      saveProgress();
+    });
+
+    document.getElementById("reset-btn").addEventListener("click", () => {
+      if (confirm("Are you sure you wish to abandon this noble quest and surrender all progress? This shall also seal away the hidden prophecies once more.")) {
+        resetProgress();
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
